@@ -6,43 +6,24 @@ namespace TrademarkRegistrar.Controllers;
 [Route("[controller]")]
 public class TrademarkController : ControllerBase
 {
-    private static readonly List<string> TrademarksList = new ();
-    private readonly ILogger<TrademarkController> _logger;
+    private static readonly HashSet<string> NormalizedTrademarks = new();
 
-    public TrademarkController(ILogger<TrademarkController> logger)
+    private static string RemoveWhiteSpaces(string input)
     {
-        _logger = logger;
-    }
-
-    private static string RemoveInPlaceCharArray(string input)
-    {
-        var len = input.Length;
-        var src = input.ToCharArray();
-        int dstIdx = 0;
-        for (int i = 0; i < len; i++)
-        {
-            var ch = src[i];
-            if (!Char.IsWhiteSpace(ch))
-                src[dstIdx++] = ch;
-        }
-        return new string(src, 0, dstIdx);
+        return input
+            .Replace(" ", "")
+            .Replace("\t", "")
+            .Replace("\n", "");
     }
     
     [HttpGet]
-    public async Task<IActionResult> Register(string name)
+    public IActionResult Register(string name)
     {
-        // if (TrademarksList.Exists(x => x.Replace(" ", "").ToLower() ==
-        //                           name.Replace(" ", "").ToLower()))
-
-        string sample = RemoveInPlaceCharArray(name);
-        if(TrademarksList.Exists(
-               x => String.Equals(RemoveInPlaceCharArray(x), sample, StringComparison.CurrentCultureIgnoreCase)
-               )
-           )
+        string registrant = RemoveWhiteSpaces(name).ToLower();
+        if(NormalizedTrademarks.Add(registrant))
         {
-            return BadRequest(new { message = "Error" });
+            return Ok(new { message = "Everything is okay!" });    
         }
-        TrademarksList.Add(name);
-        return Ok(new { message = "Everything is okay!" });    
+        return BadRequest(new { message = "Error" });
     }   
 }
